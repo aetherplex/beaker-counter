@@ -1,0 +1,1 @@
+{"name": "CounterApp", "methods": [{"name": "decrement", "args": [], "returns": {"type": "uint64"}, "desc": "decrement the counter"}, {"name": "increment", "args": [], "returns": {"type": "uint64"}, "desc": "increment the counter"}], "networks": {}}
