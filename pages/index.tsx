@@ -1,78 +1,71 @@
-import { Flex, Text, Heading, IconButton } from '@chakra-ui/react';
 import { AddIcon, MinusIcon } from '@chakra-ui/icons';
-import React, { useEffect, useState } from 'react';
-import { sandbox } from 'beaker-ts';
-import { CounterApp } from '../beaker/counterapp_client';
+import { Flex, Heading, IconButton, Text } from '@chakra-ui/react';
+import { useAtom } from 'jotai';
+import { useState } from 'react';
+import {
+    accountsAtom,
+    appClientAtom,
+    appInfoAtom,
+    counterAtom,
+} from '../store';
 
-function IndexPage({ appId, appAddr }) {
-    const [appClient, setAppClient] = useState<CounterApp>();
+function IndexPage() {
+    const [counter, setCounter] = useAtom(counterAtom);
+    const [appClient] = useAtom(appClientAtom);
+    const [appInfo] = useAtom(appInfoAtom);
 
-    async function init(id) {
-        const acct = (await sandbox.getAccounts()).pop();
-        const appClient = new CounterApp({
-            client: sandbox.getAlgodClient(),
-            signer: acct!.signer,
-            sender: acct!.addr,
-            appId: id,
-        });
-        setAppClient(appClient);
+    const [isDecrementLoading, setIsDecrementLoading] = useState(false);
+    const [isIncrementLoading, setIsIncrementLoading] = useState(false);
+
+    async function decrementCounter() {
+        setIsDecrementLoading(true);
+        await appClient?.decrement();
+        const state = await appClient?.getApplicationState();
+        if (!state) return;
+        setCounter(state.counter as number);
+        setIsDecrementLoading(false);
     }
 
-    useEffect(() => {
-        init(appId);
-    }, [appId]);
+    async function incrementCounter() {
+        setIsIncrementLoading(true);
+        await appClient?.increment();
+        const state = await appClient?.getApplicationState();
+        if (!state) return;
+        setCounter(state.counter as number);
+        setIsIncrementLoading(false);
+    }
 
     return (
         <Flex
-            w="100%"
             flexDir="column"
-            minH="100vh"
+            gap={3}
             align="center"
             justify="center"
+            flexGrow={1}
         >
-            <Flex
-                w="95%"
-                mx="auto"
-                maxW="1200px"
-                flexDir="column"
-                align="center"
-                justify="center"
-                gap={4}
-            >
-                <Heading>Beaker Counter</Heading>
-                <Text>A simple counter using the Beaker framework</Text>
-                <Flex gap={4} align="center" mt={4}>
-                    <IconButton icon={<MinusIcon />} aria-label="decerement" />
-                    <Text fontSize="2xl" fontWeight="semibold">
-                        0
-                    </Text>
-                    <IconButton icon={<AddIcon />} aria-label="decerement" />
-                </Flex>
-                <Text>App ID: {appId}</Text>
-                <Text>App address: {appAddr}</Text>
+            <Heading>Beaker Counter</Heading>
+            <Text>A simple counter using the Beaker framework</Text>
+            <Flex gap={4} align="center" mt={4}>
+                <IconButton
+                    icon={<MinusIcon />}
+                    aria-label="decerement"
+                    onClick={decrementCounter}
+                    isLoading={isDecrementLoading}
+                    disabled={isIncrementLoading || counter === 0}
+                />
+                <Text fontSize="2xl" fontWeight="semibold">
+                    {counter}
+                </Text>
+                <IconButton
+                    icon={<AddIcon />}
+                    aria-label="decerement"
+                    isLoading={isIncrementLoading}
+                    onClick={incrementCounter}
+                    disabled={isDecrementLoading}
+                />
             </Flex>
         </Flex>
     );
 }
 
 export default IndexPage;
-
-export async function getStaticProps() {
-    const acct = (await sandbox.getAccounts()).pop();
-    if (acct === undefined) return;
-
-    const appClient = new CounterApp({
-        client: sandbox.getAlgodClient(),
-        signer: acct.signer,
-        sender: acct.addr,
-    });
-
-    const [appId, appAddr] = await appClient.create();
-
-    return {
-        props: {
-            appId,
-            appAddr,
-        },
-    };
-}

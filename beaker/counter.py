@@ -18,18 +18,18 @@ class CounterApp(Application):
       return self.initialize_application_state()
 
   @external(authorize=Authorize.only(Global.creator_address()))
-  def increment(self, *, output: abi.Uint64):
+  def increment(self, amount: abi.Uint64, *, output: abi.Uint64):
       """increment the counter"""
       return Seq(
-          self.counter.set(self.counter + Int(1)),
+          self.counter.set(self.counter + Int(amount)),
           output.set(self.counter),
       )
 
   @external(authorize=Authorize.only(Global.creator_address()))
-  def decrement(self, *, output: abi.Uint64):
+  def decrement(self, amount: abi.Uint64, *, output: abi.Uint64):
       """decrement the counter"""
       return Seq(
-          self.counter.set(self.counter - Int(1)),
+          self.counter.set(self.counter - Int(amount)),
           output.set(self.counter),
       )
 
